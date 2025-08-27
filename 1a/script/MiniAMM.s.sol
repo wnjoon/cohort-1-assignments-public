@@ -30,3 +30,4 @@ contract MiniAMMScript is Script {
 // account can be allocated using `cast wallet import {name} --interactive`
 // `hm-deployer` keystore was saved successfully. Address: 0xfc5726b3ad9f313d8e7cf0cbf8fd4df9a7c2261a
 // forge script script/MiniAMM.s.sol --slow --rpc-url <rpc_url> --account <EOA> --broadcast
+// forge script script/MiniAMM.s.sol --slow --rpc-url https://coston2.testnet.flarescan.com/ --account hm-deployer --broadcast --verify
