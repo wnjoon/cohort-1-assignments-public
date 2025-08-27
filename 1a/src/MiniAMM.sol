@@ -2,6 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {IMiniAMM, IMiniAMMEvents} from "./IMiniAMM.sol";
+// import {MockERC20} from "./MockERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // Add as many variables or functions as you would like
@@ -32,21 +33,40 @@ contract MiniAMM is IMiniAMM, IMiniAMMEvents {
 
     // add parameters and implement function.
     // this function will determine the initial 'k'.
-    function _addLiquidityFirstTime() internal {}
+    function _addLiquidityFirstTime(uint256 xAmountIn, uint256 yAmountIn) internal {
+        IERC20(tokenX).transferFrom(msg.sender, address(this), xAmountIn);
+        IERC20(tokenY).transferFrom(msg.sender, address(this), yAmountIn);
+
+        xReserve = xAmountIn;
+        yReserve = yAmountIn;
+        k = xReserve * yReserve;
+    }
 
     // add parameters and implement function.
     // this function will increase the 'k'
     // because it is transferring liquidity from users to this contract.
-    function _addLiquidityNotFirstTime() internal {}
+    function _addLiquidityNotFirstTime(uint256 xAmountIn, uint256 yAmountIn) internal {
+        IERC20(tokenX).transferFrom(msg.sender, address(this), xAmountIn);
+        IERC20(tokenY).transferFrom(msg.sender, address(this), yAmountIn);
+
+        xReserve += xAmountIn;
+        yReserve += yAmountIn;
+        k = xReserve * yReserve;
+    }
 
     // complete the function
+    // IMPORTANT
+    // Add liquidity is different from CPAMM
+    // We should maintain the ratio of each token in the contract.
+    // k will be recalculated with the updated token amounts.
     function addLiquidity(uint256 xAmountIn, uint256 yAmountIn) external {
+        require(xAmountIn > 0 && yAmountIn > 0, "Amounts must be greater than 0");
         if (k == 0) {
             // add params
-            _addLiquidityFirstTime();
+            _addLiquidityFirstTime(xAmountIn, yAmountIn);
         } else {
             // add params
-            _addLiquidityNotFirstTime();
+            _addLiquidityNotFirstTime(xAmountIn, yAmountIn);
         }
         emit AddLiquidity(xAmountIn, yAmountIn);
     }
