@@ -55,7 +55,7 @@ contract MiniAMM is IMiniAMM, IMiniAMMEvents {
     }
 
     // complete the function
-    // IMPORTANT
+    // IMPORTANT!
     // Add liquidity is different from CPAMM
     // We should maintain the ratio of each token in the contract.
     // k will be recalculated with the updated token amounts.
@@ -72,5 +72,9 @@ contract MiniAMM is IMiniAMM, IMiniAMMEvents {
     }
 
     // complete the function
-    function swap(uint256 xAmountIn, uint256 yAmountIn) external {}
+    function swap(uint256 xAmountIn, uint256 yAmountIn) external {
+        
+        uint256 expectedYOut = yReserve - (k / (xReserve + xAmountIn));
+        emit Swap(xAmountIn, expectedYOut);
+    }
 }
