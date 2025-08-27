@@ -48,6 +48,7 @@ contract MiniAMM is IMiniAMM, IMiniAMMEvents {
             // add params
             _addLiquidityNotFirstTime();
         }
+        emit AddLiquidity(xAmountIn, yAmountIn);
     }
 
     // complete the function
