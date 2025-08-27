@@ -73,8 +73,46 @@ contract MiniAMM is IMiniAMM, IMiniAMMEvents {
 
     // complete the function
     function swap(uint256 xAmountIn, uint256 yAmountIn) external {
-        
-        uint256 expectedYOut = yReserve - (k / (xReserve + xAmountIn));
-        emit Swap(xAmountIn, expectedYOut);
+        require(xReserve > 0 && yReserve > 0, "No liquidity in pool");
+        require(xAmountIn > 0 || yAmountIn > 0, "Must swap at least one token");
+        if (xAmountIn > 0) {
+            require(yAmountIn == 0, "Can only swap one direction at a time");
+            require(IERC20(tokenX).balanceOf(address(this)) >= xAmountIn, "Insufficient liquidity");
+            uint256 expectedYOut = yReserve - (k / (xReserve + xAmountIn));
+            
+            // transfer tokens
+            require(IERC20(tokenX).allowance(msg.sender, address(this)) >= xAmountIn, "Insufficient allowance");
+            require(IERC20(tokenX).balanceOf(msg.sender) >= xAmountIn, "Insufficient allowance");
+            require(IERC20(tokenY).balanceOf(address(this)) >= expectedYOut, "Insufficient liquidity");
+            
+            IERC20(tokenX).transferFrom(msg.sender, address(this), xAmountIn);
+            IERC20(tokenY).transfer(msg.sender, expectedYOut);
+
+            xReserve += xAmountIn;
+            yReserve -= expectedYOut;
+            k = xReserve * yReserve;
+
+            emit Swap(xAmountIn, expectedYOut);
+        }
+
+        if (yAmountIn > 0) {
+            require(xAmountIn == 0, "Can only swap one direction at a time");
+            require(IERC20(tokenY).balanceOf(address(this)) >= yAmountIn, "Insufficient liquidity");
+            uint256 expectedXOut = xReserve - (k / (yReserve + yAmountIn));
+            
+             // transfer tokens
+            require(IERC20(tokenY).allowance(msg.sender, address(this)) >= yAmountIn, "Insufficient allowance");
+            require(IERC20(tokenY).balanceOf(msg.sender) >= yAmountIn, "Insufficient allowance");
+            require(IERC20(tokenX).balanceOf(address(this)) >= expectedXOut, "Insufficient liquidity");
+            
+            IERC20(tokenY).transferFrom(msg.sender, address(this), yAmountIn);
+            IERC20(tokenX).transfer(msg.sender, expectedXOut);
+
+            xReserve -= expectedXOut;
+            yReserve += yAmountIn;
+            k = xReserve * yReserve;
+
+            emit Swap(expectedXOut, yAmountIn);
+        }
     }
 }
