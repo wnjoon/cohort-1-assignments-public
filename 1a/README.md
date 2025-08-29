@@ -7,8 +7,8 @@ Go to [the faucet](https://faucet.flare.network/coston2) and input your EVM wall
 ## Requirements
 
 `MiniAMM.sol` has two features available to users:
-1. Add liquidity: users supply two tokens at the same time. K should remain constant all the time, except for the first supply. Essentially, this function transfers a pair of tokens into the contract, thereby increasing the 'k'. However, the ratio of X to Y must stay constant.
-1. Swap: users can swap X amount of token into Y amount of token, keeping K constant. Essentially, this transfers X amount of token into the contract, and transfers out Y amount of token to the user, while keeping K constant.
+1. Add liquidity: users supply two tokens at the same time. Essentially, this function transfers a pair of tokens into the contract, thereby increasing the $k$. However, the ratio of $x$ to $y$ must stay constant, except for the first time the liquidity is supplied.
+1. Swap: users can swap $x$ amount of token into $y$ amount of token, keeping $k$ constant. Essentially, this transfers $x$ amount of token into the contract, and transfers out $y$ amount of token to the user, while keeping $k$ constant.
 
 To be able to test MiniAMM, you need to deploy two different mock ERC-20 tokens:
 1. Complete MockERC20 contract in `MockERC20.sol`. `freeMintTo` must mint `amount` tokens to `to`. `freeMintToSender` mints `amount` tokens to `msg.sender`. These functions must be callable by any address so that minting is available for anyone.
