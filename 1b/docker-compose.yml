@@ -1,0 +1,15 @@
+version: "3.8"
+
+# services:
+  # caddy:
+  # ngrok:
+  # sc-deployer:
+  # sc-deployment-server:
+  # geth:
+  # geth-init:
+  # graph-ipfs:
+  # graph-postgres:
+  # graph-redis:
+  # graph-node:
+
+  # blockscout: should be another docker-compose.yml file from https://github.com/blockscout/blockscout/tree/master/docker-compose. Don't create a container in this file.
