@@ -3,7 +3,20 @@ version: "3.8"
 services:
   # caddy:
   # ngrok:
-  # sc-deployer:
+  sc-deployer:
+  # Error invoking remote method 'docker-start-container': Error: (HTTP code 400) unexpected - failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: exec: "/bin/bash": stat /bin/bash: no such file or directory: unknown
+    image: ghcr.io/foundry-rs/foundry:latest
+    platform: linux/amd64
+    container_name: sc-deployer
+    volumes:
+      - ./sc-deployer:/workspace
+      - ./geth-init:/shared
+    working_dir: /workspace
+    entrypoint: ["/bin/sh", "/workspace/entrypoint.sh"]
+    depends_on:
+      - geth
+    networks:
+      - geth-network
   # sc-deployment-server:
   geth:
     image: ethereum/client-go:v1.15.0
@@ -23,6 +36,7 @@ services:
       --http.addr 0.0.0.0
       --http.port 8545
       --http.corsdomain "*"
+      --http.vhosts "*"
       --http.api "eth,net,web3,personal,miner,admin,debug"
       --ws
       --ws.addr 0.0.0.0
@@ -36,7 +50,20 @@ services:
       --verbosity 3
       --miner.gaslimit 8000000
     restart: unless-stopped
-  # geth-init:
+    networks:
+      - geth-network
+  geth-init:
+    image: ethereum/client-go:v1.15.0
+    container_name: geth-init
+    volumes:
+      - ./geth-init:/scripts
+      - geth-data:/root/.ethereum
+      - ./geth-init:/shared
+    entrypoint: ["/bin/sh", "/scripts/entrypoint.sh"]
+    depends_on:
+      - geth
+    networks:
+      - geth-network
   # graph-ipfs:
   # graph-postgres:
   # graph-redis:
@@ -46,3 +73,7 @@ services:
 
 volumes:
   geth-data:
+
+networks:
+  geth-network:
+    driver: bridge
