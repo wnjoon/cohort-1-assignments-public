@@ -28,5 +28,13 @@
 
 :80 {
     import cors
-    reverse_proxy geth:8545
+    
+    handle /rpc* {
+        uri strip_prefix /rpc
+        reverse_proxy geth:8545
+    }
+    
+    handle {
+        reverse_proxy geth:8545
+    }
 }
