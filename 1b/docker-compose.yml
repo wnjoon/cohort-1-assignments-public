@@ -4,9 +4,10 @@ services:
   # caddy:
   # ngrok:
   sc-deployer:
-  # Error invoking remote method 'docker-start-container': Error: (HTTP code 400) unexpected - failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: exec: "/bin/bash": stat /bin/bash: no such file or directory: unknown
-    image: ghcr.io/foundry-rs/foundry:latest
-    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile
+    platform: linux/arm64
     container_name: sc-deployer
     volumes:
       - ./sc-deployer:/workspace
