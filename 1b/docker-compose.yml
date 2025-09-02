@@ -1,13 +1,24 @@
 version: "3.8"
 
 services:
-  # caddy:
+  caddy:
+    image: caddy:2.7-alpine
+    container_name: caddy
+    ports:
+      - "8080:80"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+    depends_on:
+      - geth
+    networks:
+      - geth-network
   # ngrok:
   sc-deployer:
-  # Error invoking remote method 'docker-start-container': Error: (HTTP code 400) unexpected - failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: exec: "/bin/bash": stat /bin/bash: no such file or directory: unknown
-    image: ghcr.io/foundry-rs/foundry:latest
-    platform: linux/amd64
+    # image digest varies by platform, so need to change as necessary
+    image: ghcr.io/foundry-rs/foundry:stable@sha256:67c9d2195925b4b045b3d49c3155d9097c80d9c06cc3c95adb7d7ac3c93c9a40
+    platform: linux/arm64
     container_name: sc-deployer
+    user: root # still bug, don't know how to install nodejs and npm
     volumes:
       - ./sc-deployer:/workspace
       - ./geth-init:/shared
