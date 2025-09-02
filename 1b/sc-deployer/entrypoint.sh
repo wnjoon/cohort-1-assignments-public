@@ -19,7 +19,7 @@ if [ -d "cohort-1-assignments-public" ]; then
     cd cohort-1-assignments-public
     git pull origin main
 else
-    git clone https://github.com/Juyeong-Byeon/cohort-1-assignments-public.git
+    git clone https://github.com/wnjoon/cohort-1-assignments-public.git
     cd cohort-1-assignments-public
 fi
 
@@ -36,12 +36,24 @@ forge build
 
 # Deploy the contracts
 echo "🚀 Deploying MiniAMM contracts..."
-forge script script/MiniAMM.s.sol:MiniAMMScript \
+DEPLOYMENT_RESULT=$(forge script script/MiniAMM.s.sol:MiniAMMScript \
     --rpc-url http://geth:8545 \
     --private-key be44593f36ac74d23ed0e80569b672ac08fa963ede14b63a967d92739b0c8659 \
     --broadcast \
-    --verify
+    --json 2>&1)
 
+echo "$DEPLOYMENT_RESULT"
+
+echo ""
 echo "✅ Deployment completed!"
 echo ""
-echo "📊 Contract addresses should be available in the broadcast logs above."
+
+# Parse and display contract addresses from JSON output
+echo "📊 Deployed Contract Addresses:"
+echo "$DEPLOYMENT_RESULT" | grep -o '"contract_address":"0x[a-fA-F0-9]*"' | \
+while read -r line; do
+    address=$(echo "$line" | sed 's/"contract_address":"//g' | sed 's/"//g')
+    if [ "$address" != "null" ] && [ -n "$address" ]; then
+        echo "  📍 Contract: $address"
+    fi
+done
