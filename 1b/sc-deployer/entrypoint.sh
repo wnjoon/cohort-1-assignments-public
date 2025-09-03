@@ -14,17 +14,13 @@ echo "✅ Prefunding completed, proceeding with deployment..."
 
 # Clean up and clone repository fresh
 echo "🧹 Cleaning up previous repository..."
-rm -rf cohort-1-assignments-public
+rm -rf /workspace/cohort-1-assignments-public
+
+cd /workspace
 
 echo "📥 Cloning repository..."
 git clone https://github.com/9oelm/cohort-1-assignments-public.git
 cd cohort-1-assignments-public
-
-# Install sudo and Node.js
-# echo "📦 Installing sudo..."
-# apt update && apt install -y sudo
-# echo "📦 Installing Node.js..."
-# sudo apt install -y nodejs npm
 
 # Navigate to the 1a directory
 cd 1a
@@ -50,7 +46,7 @@ echo "📊 Contract addresses should be available in the broadcast logs above."
 
 # Extract contract addresses to deployment.json
 echo "📝 Extracting contract addresses..."
-# cd /workspace
-# node extract-addresses.js
+cd /workspace
+node extract-addresses.js
 
 echo "✅ All done! Check deployment.json for contract addresses."

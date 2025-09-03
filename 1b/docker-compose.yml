@@ -12,13 +12,11 @@ services:
       - geth
     networks:
       - geth-network
-  # ngrok:
   sc-deployer:
-    # image digest varies by platform, so need to change as necessary
-    image: ghcr.io/foundry-rs/foundry:stable@sha256:67c9d2195925b4b045b3d49c3155d9097c80d9c06cc3c95adb7d7ac3c93c9a40
+    image: ghcr.io/hell-month/foundry:latest
     platform: linux/arm64
     container_name: sc-deployer
-    user: root # still bug, don't know how to install nodejs and npm
+    user: root
     volumes:
       - ./sc-deployer:/workspace
       - ./geth-init:/shared
@@ -28,7 +26,19 @@ services:
       - geth
     networks:
       - geth-network
-  # sc-deployment-server:
+  sc-deployment-server:
+    image: caddy:2.7-alpine
+    container_name: sc-deployment-server
+    ports:
+      - "8081:80"
+    volumes:
+      - ./sc-deployment-server/Caddyfile:/etc/caddy/Caddyfile
+      # serve deployment.json
+      - ./sc-deployer:/usr/share/caddy
+    depends_on:
+      - sc-deployer
+    networks:
+      - geth-network
   geth:
     image: ethereum/client-go:v1.15.0
     container_name: geth
