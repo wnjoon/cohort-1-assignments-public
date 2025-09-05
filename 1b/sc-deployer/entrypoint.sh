@@ -12,16 +12,17 @@ until [ -f "/shared/geth-init-complete" ]; do
 done
 echo "✅ Prefunding completed, proceeding with deployment..."
 
-# Clone the repository
-echo "📥 Cloning repository..."
-if [ -d "cohort-1-assignments-public" ]; then
-    echo "Repository already exists, pulling latest changes..."
-    cd cohort-1-assignments-public
-    git pull origin main
-else
-    git clone https://github.com/wnjoon/cohort-1-assignments-public.git
-    cd cohort-1-assignments-public
+# Clean up and clone repository fresh
+echo "🧹 Cleaning up previous repository..."
+if [ -d "/workspace/cohort-1-assignments-public" ]; then
+    rm -rf /workspace/cohort-1-assignments-public
 fi
+
+cd /workspace
+
+echo "📥 Cloning repository..."
+git clone https://github.com/9oelm/cohort-1-assignments-public.git
+cd cohort-1-assignments-public
 
 # Navigate to the 1a directory
 cd 1a
@@ -36,6 +37,27 @@ forge build
 
 # Deploy the contracts
 echo "🚀 Deploying MiniAMM contracts..."
+# forge script script/MiniAMM.s.sol:MiniAMMScript \
+#     --rpc-url http://geth:8545 \
+#     --private-key be44593f36ac74d23ed0e80569b672ac08fa963ede14b63a967d92739b0c8659 \
+#     --broadcast
+
+# echo "✅ Deployment completed!"
+# echo ""
+# echo "📊 Contract addresses should be available in the broadcast logs above."
+
+# # Clean up and clone repository fresh
+# echo "🧹 Cleaning up repository..."
+# rm -rf /workspace/cohort-1-assignments-public
+
+
+# # Extract contract addresses to deployment.json
+# echo "📝 Extracting contract addresses..."
+# cd /workspace
+# node extract-addresses.js
+
+# echo "✅ All done! Check deployment.json for contract addresses."
+
 DEPLOYMENT_RESULT=$(forge script script/MiniAMM.s.sol:MiniAMMScript \
     --rpc-url http://geth:8545 \
     --private-key be44593f36ac74d23ed0e80569b672ac08fa963ede14b63a967d92739b0c8659 \
