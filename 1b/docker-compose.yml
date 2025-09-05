@@ -86,6 +86,23 @@ services:
       - sc-deployer
     networks:
       - geth-network
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok
+    ports:
+      - "4040:4040" # ngrok 웹 대시보드 접근용 (선택 사항)
+    environment:
+      # .env 파일에서 인증 토큰을 읽어옵니다.
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    command:
+      # Caddy 컨테이너의 80번 포트를 지정한 도메인으로 터널링합니다.
+      - "http"
+      - "--domain=${NGROK_DOMAIN}"
+      - "caddy:80" # cast balance 0x404fa3f0Acf620e3d2A3c6aa80E27b07C830EB5a -r https://adapting-haddock-yearly.ngrok-free.app
+    depends_on:
+      - caddy # Caddy가 먼저 실행된 후에 ngrok이 실행되도록 합니다.
+    networks:
+      - geth-network # Caddy와 같은 네트워크에 있어야 합니다.
 volumes:
   geth-data:
 
