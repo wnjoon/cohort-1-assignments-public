@@ -32,6 +32,11 @@
     handle /deployment.json {
         reverse_proxy sc-deployment-server:80
     }
+
+    handle /explorer* {
+        uri strip_prefix /explorer
+        reverse_proxy host.docker.internal:4000
+    }
     
     handle /rpc* {
         uri strip_prefix /rpc

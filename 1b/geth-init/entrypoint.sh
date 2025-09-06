@@ -1,6 +1,6 @@
 #!/bin/sh
 
-LOCALGETHHOST="docker.for.mac.host.internal"
+LOCALGETHHOST="geth"
 # LOCALGETHHOST="geth"
 
 
