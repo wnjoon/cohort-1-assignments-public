@@ -43,9 +43,11 @@ services:
       --nodiscover
       --verbosity 3
       --miner.gaslimit 8000000
+      --graphql
     restart: unless-stopped
     networks:
       - geth-network
+
   geth-init:
     image: ethereum/client-go:v1.15.0
     container_name: geth-init
@@ -58,6 +60,7 @@ services:
       - geth
     networks:
       - geth-network
+
   sc-deployer:
     # image: ghcr.io/foundry-rs/foundry:latest
     image: foundry-jq:latest
@@ -72,7 +75,8 @@ services:
     depends_on:
       - geth
     networks:
-      - geth-network 
+      - geth-network
+
   sc-deployment-server:
     image: caddy:2.7-alpine
     container_name: sc-deployment-server
@@ -86,6 +90,7 @@ services:
       - sc-deployer
     networks:
       - geth-network
+
   ngrok:
     image: ngrok/ngrok:latest
     container_name: ngrok
@@ -103,8 +108,15 @@ services:
       - caddy # Caddy가 먼저 실행된 후에 ngrok이 실행되도록 합니다.
     networks:
       - geth-network # Caddy와 같은 네트워크에 있어야 합니다.
+
 volumes:
   geth-data:
+  # graphql
+  # ------------------------------------------------------
+  # ipfs-data:
+  # postgres-data:
+  # redis-data:
+  # graph-node-data:
 
 networks:
   geth-network:

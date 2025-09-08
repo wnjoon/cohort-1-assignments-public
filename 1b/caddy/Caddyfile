@@ -29,13 +29,29 @@
 :80 {
     import cors
     
-    handle /deployment.json {
+    handle /deployment* {
         reverse_proxy sc-deployment-server:80
     }
 
     handle /explorer* {
         uri strip_prefix /explorer
-        reverse_proxy host.docker.internal:4000
+        reverse_proxy proxy:80
+    }
+
+    handle /assets/* {
+        reverse_proxy proxy:80
+    }
+    
+    handle /_next/* {
+        reverse_proxy proxy:80
+    }
+    
+    handle /icons/* {
+        reverse_proxy proxy:80
+    }
+    
+    handle /static/* {
+        reverse_proxy proxy:80
     }
     
     handle /rpc* {
@@ -45,5 +61,10 @@
     
     handle {
         reverse_proxy geth:8545
+    }
+
+    handle /graphql* {
+        uri strip_prefix /graphql
+        reverse_proxy graph-node:8000
     }
 }
