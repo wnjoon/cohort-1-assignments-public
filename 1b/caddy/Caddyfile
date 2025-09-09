@@ -63,8 +63,8 @@
         reverse_proxy geth:8545
     }
 
-    handle /graphql* {
-        uri strip_prefix /graphql
+    handle /graph-playground* {
+        uri strip_prefix /graph-playground
         reverse_proxy graph-node:8000
     }
 }
