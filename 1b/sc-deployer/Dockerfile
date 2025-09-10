@@ -1,13 +1,36 @@
-# 1. 베이스 이미지 지정
-# 기존에 사용하던 공식 foundry 이미지를 기반으로 시작합니다.
-FROM ghcr.io/foundry-rs/foundry:latest
+FROM ghcr.io/foundry-rs/foundry:stable
 
-# 2. 패키지 설치를 위해 root 사용자로 전환
+# Avoid prompts from apt
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Otherwise, the installation below will fail
 USER root
 
-# 3. apt 패키지 목록을 업데이트하고 jq를 설치합니다.
-RUN apt-get update && apt-get install -y jq \
+# Update and install necessary packages
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    git \
+    build-essential \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# 4. 보안을 위해 다시 기본 사용자인 foundry로 전환
-USER foundry
+# Install Node.js and npm (using NodeSource repository for latest LTS)
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user to avoid permission issues
+RUN useradd -m -s /bin/bash deployer && \
+    mkdir -p /app && \
+    chown -R deployer:deployer /app
+
+# Set working directory
+WORKDIR /app
+
+# Switch to non-root user
+USER deployer
+
+# Ensure npm cache has correct permissions
+RUN mkdir -p ~/.npm && \
+    npm config set cache ~/.npm

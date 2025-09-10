@@ -5,11 +5,35 @@ services:
     image: caddy:2.7-alpine
     container_name: caddy
     ports:
-      - "3000:80"
+      - "8080:80"
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile
     depends_on:
       - geth
+    networks:
+      - geth-network
+  sc-deployer:
+    image: ghcr.io/hell-month/foundry:latest
+    platform: linux/arm64
+    container_name: sc-deployer
+    user: root
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+    depends_on:
+      - geth
+    networks:
+      - geth-network
+  sc-deployment-server:
+    image: caddy:2.7-alpine
+    container_name: sc-deployment-server
+    ports:
+      - "8081:80"
+    volumes:
+      - ./sc-deployment-server/Caddyfile:/etc/caddy/Caddyfile
+      # serve deployment.json
+      - ./sc-deployer:/usr/share/caddy
+    depends_on:
+      - sc-deployer
     networks:
       - geth-network
   geth:
