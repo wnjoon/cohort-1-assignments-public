@@ -135,11 +135,7 @@ contract MiniAMMTest is Test {
 
         // Now add more liquidity maintaining the ratio
         uint256 xDelta = 500 * 10 ** 18;
-
-        // Calculate exact amount needed
-        // (xInitial + xDelta) * (yInitial + yRequired) = k
-        // uint256 yRequired = miniAMM.k() / (xInitial + xDelta) - yInitial;
-        uint256 yRequired = (xDelta * yInitial) / xInitial;
+        uint256 yRequired = (xDelta * yInitial) / xInitial; // Calculate exact amount needed
 
         vm.startPrank(bob);
 
