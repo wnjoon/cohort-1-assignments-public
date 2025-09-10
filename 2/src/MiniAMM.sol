@@ -17,6 +17,8 @@ contract MiniAMM is IMiniAMM, IMiniAMMEvents, MiniAMMLP {
 
     // implement constructor
     constructor(address _tokenX, address _tokenY) MiniAMMLP(_tokenX, _tokenY) {
+        tokenX = _tokenX;
+        tokenY = _tokenY;
     }
 
     // Helper function to calculate square root
