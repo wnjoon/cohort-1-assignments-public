@@ -1,3 +1,8 @@
-1b/blockscout/
+1b/blockscout/docker-compose
+1b/blockscout/services/blockscout-db-data
+1b/blockscout/services/dets
+1b/blockscout/services/logs
+1b/blockscout/services/redis-data
+1b/blockscout/services/stats-db-data
 1b/graph/graph-node
 1b/graph/data

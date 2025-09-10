@@ -2,7 +2,8 @@
 
 OPTION=$1
 
-BLOCKSCOUT_PATH=blockscout/docker-compose
+# BLOCKSCOUT_PATH=blockscout/docker-compose
+BLOCKSCOUT_PATH=blockscout
 GRAPHQL_PATH=graph
 
 function geth_up() {
@@ -17,7 +18,8 @@ function graphql_up() {
 
 function blockscout_up() {
     echo "==> up blockscout"
-    docker-compose -f $BLOCKSCOUT_PATH/geth.yml --project-name 1b up -d
+    # docker-compose -f $BLOCKSCOUT_PATH/geth.yml --project-name 1b up -d
+    docker-compose -f $BLOCKSCOUT_PATH/docker-compose.yml --project-name 1b up -d
 }
 
 function geth_down() {
@@ -32,7 +34,9 @@ function graphql_down() {
 
 function blockscout_down() {
     echo "==> down blockscout"
-    docker-compose -f $BLOCKSCOUT_PATH/geth.yml --project-name 1b down -v
+    # docker-compose -f $BLOCKSCOUT_PATH/geth.yml --project-name 1b down -v
+    # rm -rf $BLOCKSCOUT_PATH/services/blockscout-db-data
+    docker-compose -f $BLOCKSCOUT_PATH/docker-compose.yml --project-name 1b down -v
     rm -rf $BLOCKSCOUT_PATH/services/blockscout-db-data
 }
 
@@ -48,7 +52,8 @@ function graphql_restart() {
 
 function blockscout_restart() {
     echo "==> restart blockscout"
-    docker-compose -f $BLOCKSCOUT_PATH/geth.yml --project-name 1b restart
+    # docker-compose -f $BLOCKSCOUT_PATH/geth.yml --project-name 1b restart
+    docker-compose -f $BLOCKSCOUT_PATH/docker-compose.yml --project-name 1b restart
 }
 
 
