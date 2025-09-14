@@ -9,6 +9,7 @@ import { ErrorMessage } from '../components/ErrorMessage';
 import { TokenMint } from '../components/TokenMint';
 import { LiquidityProvider } from '../components/LiquidityProvider';
 import SwapComponent from '../components/SwapComponent';
+import RemoveLiquidity from '../components/RemoveLiquidity';
 
 export default function Home() {
   const { isConnected } = useAccount();
@@ -78,6 +79,16 @@ export default function Home() {
         {isConnected && (
           <div className="mt-8 bg-white rounded-lg shadow p-6">
             <SwapComponent 
+              onError={(error: string) => setErrorMessage(error)} 
+              onSuccess={(message: string) => setSuccessMessage(message)} 
+            />
+          </div>
+        )}
+
+        {/* Remove Liquidity Component (only shown when wallet is connected) */}
+        {isConnected && (
+          <div className="mt-8 bg-white rounded-lg shadow p-6">
+            <RemoveLiquidity 
               onError={(error: string) => setErrorMessage(error)} 
               onSuccess={(message: string) => setSuccessMessage(message)} 
             />
