@@ -17,22 +17,38 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
   const [expectedOutput, setExpectedOutput] = useState('0');
   const [isCalculating, setIsCalculating] = useState(false);
 
-  // Read pool reserves
-  const { data: reserves } = useReadContract({
+  // Determine token mapping based on contract logic (tokenX < tokenY by address)
+  const isTokenALower = CONTRACT_ADDRESSES.TOKEN_A.toLowerCase() < CONTRACT_ADDRESSES.TOKEN_B.toLowerCase();
+  const tokenXAddress = isTokenALower ? CONTRACT_ADDRESSES.TOKEN_A : CONTRACT_ADDRESSES.TOKEN_B;
+  const tokenYAddress = isTokenALower ? CONTRACT_ADDRESSES.TOKEN_B : CONTRACT_ADDRESSES.TOKEN_A;
+
+  // Read pool reserves using individual calls like PoolInfo component
+  const { data: xReserve } = useReadContract({
     address: CONTRACT_ADDRESSES.MINIAMM as `0x${string}`,
     abi: [
       {
         inputs: [],
-        name: 'getReserves',
-        outputs: [
-          { name: 'xReserve', type: 'uint256' },
-          { name: 'yReserve', type: 'uint256' },
-        ],
+        name: 'xReserve',
+        outputs: [{ name: '', type: 'uint256' }],
         stateMutability: 'view',
         type: 'function',
       },
     ],
-    functionName: 'getReserves',
+    functionName: 'xReserve',
+  });
+
+  const { data: yReserve } = useReadContract({
+    address: CONTRACT_ADDRESSES.MINIAMM as `0x${string}`,
+    abi: [
+      {
+        inputs: [],
+        name: 'yReserve',
+        outputs: [{ name: '', type: 'uint256' }],
+        stateMutability: 'view',
+        type: 'function',
+      },
+    ],
+    functionName: 'yReserve',
   });
 
   // Read user token balances
@@ -116,7 +132,7 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
 
   // Calculate expected output amount
   useEffect(() => {
-    if (!reserves || !inputAmount || inputAmount === '0') {
+    if (!xReserve || !yReserve || !inputAmount || inputAmount === '0') {
       setExpectedOutput('0');
       return;
     }
@@ -125,9 +141,10 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
     
     try {
       const inputAmountWei = parseEther(inputAmount);
-      const [xReserve, yReserve] = reserves as readonly [bigint, bigint];
+      const xReserveBigInt = xReserve as bigint;
+      const yReserveBigInt = yReserve as bigint;
       
-      if (xReserve === 0n || yReserve === 0n) {
+      if (xReserveBigInt === 0n || yReserveBigInt === 0n) {
         setExpectedOutput('0');
         setIsCalculating(false);
         return;
@@ -135,17 +152,21 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
 
       let outputAmount: bigint;
       
-      if (swapDirection === 'AtoB') {
-        // Swapping Token A for Token B
+      // Determine which reserve to use based on actual token mapping
+      const isSwappingAtoB = swapDirection === 'AtoB';
+      const isATokenX = isTokenALower;
+      
+      if ((isSwappingAtoB && isATokenX) || (!isSwappingAtoB && !isATokenX)) {
+        // Swapping tokenX for tokenY
         const amountInWithFee = inputAmountWei * 997n;
-        const numerator = amountInWithFee * yReserve;
-        const denominator = (xReserve * 1000n) + amountInWithFee;
+        const numerator = amountInWithFee * yReserveBigInt;
+        const denominator = (xReserveBigInt * 1000n) + amountInWithFee;
         outputAmount = numerator / denominator;
       } else {
-        // Swapping Token B for Token A
+        // Swapping tokenY for tokenX
         const amountInWithFee = inputAmountWei * 997n;
-        const numerator = amountInWithFee * xReserve;
-        const denominator = (yReserve * 1000n) + amountInWithFee;
+        const numerator = amountInWithFee * xReserveBigInt;
+        const denominator = (yReserveBigInt * 1000n) + amountInWithFee;
         outputAmount = numerator / denominator;
       }
 
@@ -156,7 +177,7 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
     }
     
     setIsCalculating(false);
-  }, [inputAmount, swapDirection, reserves]);
+  }, [inputAmount, swapDirection, xReserve, yReserve, isTokenALower]);
 
   // Handle approve success
   useEffect(() => {
@@ -222,20 +243,21 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
       }
     }
 
-    if (!reserves) {
+    if (!xReserve || !yReserve) {
       return 'Pool reserves not loaded';
     }
 
-    const [xReserve, yReserve] = reserves as readonly [bigint, bigint];
-    if (xReserve === 0n || yReserve === 0n) {
+    const xReserveBigInt = xReserve as bigint;
+    const yReserveBigInt = yReserve as bigint;
+    if (xReserveBigInt === 0n || yReserveBigInt === 0n) {
       return 'No liquidity in pool';
     }
 
     // Check if swap amount exceeds available liquidity
-    if (swapDirection === 'AtoB' && inputAmountWei >= xReserve) {
+    if (swapDirection === 'AtoB' && inputAmountWei >= xReserveBigInt) {
       return 'Swap amount exceeds available liquidity';
     }
-    if (swapDirection === 'BtoA' && inputAmountWei >= yReserve) {
+    if (swapDirection === 'BtoA' && inputAmountWei >= yReserveBigInt) {
       return 'Swap amount exceeds available liquidity';
     }
 
@@ -291,9 +313,19 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
     try {
       const inputAmountWei = parseEther(inputAmount);
       
-      const swapArgs: readonly [bigint, bigint] = swapDirection === 'AtoB' 
-        ? [inputAmountWei, 0n] // xAmountIn, yAmountIn
-        : [0n, inputAmountWei]; // xAmountIn, yAmountIn
+      // Determine correct swap arguments based on token mapping
+      const isSwappingAtoB = swapDirection === 'AtoB';
+      const isATokenX = isTokenALower;
+      
+      let swapArgs: readonly [bigint, bigint];
+      
+      if ((isSwappingAtoB && isATokenX) || (!isSwappingAtoB && !isATokenX)) {
+        // Swapping tokenX for tokenY
+        swapArgs = [inputAmountWei, 0n];
+      } else {
+        // Swapping tokenY for tokenX
+        swapArgs = [0n, inputAmountWei];
+      }
 
       writeSwap({
         address: CONTRACT_ADDRESSES.MINIAMM as `0x${string}`,
@@ -356,7 +388,7 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
           
           <button
             onClick={switchDirection}
-            className="mx-4 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors"
+            className="mx-4 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors cursor-pointer disabled:cursor-not-allowed"
             disabled={isLoading}
           >
             ⇄
@@ -413,7 +445,7 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
         disabled={!canSwap}
         className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
           canSwap
-            ? 'bg-blue-500 hover:bg-blue-600 text-white'
+            ? 'bg-blue-500 hover:bg-blue-600 text-white cursor-pointer'
             : 'bg-gray-300 text-gray-500 cursor-not-allowed'
         }`}
       >
