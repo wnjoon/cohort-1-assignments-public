@@ -2,20 +2,20 @@
 
 import { useEffect, useState } from 'react';
 import { ethers } from 'ethers';
-import { CONTRACT_ADDRESSES, CHAIN_CONFIG } from '@/config/contracts';
+import { CONTRACT_ADDRESSES, CHAIN_CONFIG, TOKEN_METADATA } from '@/config/contracts';
 import { MiniAMM__factory } from '@/types';
 
 interface PoolData {
-  tokenAReserve: string;
-  tokenBReserve: string;
+  tokenXReserve: string;
+  tokenYReserve: string;
   loading: boolean;
   error: string | null;
 }
 
 export function PoolInfo() {
   const [poolData, setPoolData] = useState<PoolData>({
-    tokenAReserve: '0',
-    tokenBReserve: '0',
+    tokenXReserve: '0',
+    tokenYReserve: '0',
     loading: true,
     error: null,
   });
@@ -34,8 +34,8 @@ export function PoolInfo() {
         ]);
         
         setPoolData({
-          tokenAReserve: ethers.formatEther(xReserve),
-          tokenBReserve: ethers.formatEther(yReserve),
+          tokenXReserve: ethers.formatEther(xReserve),
+          tokenYReserve: ethers.formatEther(yReserve),
           loading: false,
           error: null,
         });
@@ -78,12 +78,12 @@ export function PoolInfo() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center p-4 bg-gray-50 rounded-md">
-        <span className="text-gray-600">Token A Reserve:</span>
-        <span className="font-mono text-lg">{parseFloat(poolData.tokenAReserve).toFixed(4)}</span>
+        <span className="text-gray-600">{TOKEN_METADATA[CONTRACT_ADDRESSES.TOKEN_X].name} ({TOKEN_METADATA[CONTRACT_ADDRESSES.TOKEN_X].symbol}) Reserve:</span>
+        <span className="font-mono text-lg">{parseFloat(poolData.tokenXReserve).toFixed(4)}</span>
       </div>
       <div className="flex justify-between items-center p-4 bg-gray-50 rounded-md">
-        <span className="text-gray-600">Token B Reserve:</span>
-        <span className="font-mono text-lg">{parseFloat(poolData.tokenBReserve).toFixed(4)}</span>
+        <span className="text-gray-600">{TOKEN_METADATA[CONTRACT_ADDRESSES.TOKEN_Y].name} ({TOKEN_METADATA[CONTRACT_ADDRESSES.TOKEN_Y].symbol}) Reserve:</span>
+        <span className="font-mono text-lg">{parseFloat(poolData.tokenYReserve).toFixed(4)}</span>
       </div>
       <div className="text-sm text-gray-500 text-center">
         Pool information updates every 30 seconds

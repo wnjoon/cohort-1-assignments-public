@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { parseEther, formatEther } from 'viem';
-import { CONTRACT_ADDRESSES } from '../config/contracts';
+import { CONTRACT_ADDRESSES, TOKEN_METADATA } from '../config/contracts';
 
 interface SwapComponentProps {
   onError: (error: string) => void;
@@ -12,17 +12,12 @@ interface SwapComponentProps {
 
 export default function SwapComponent({ onError, onSuccess }: SwapComponentProps) {
   const { address } = useAccount();
-  const [swapDirection, setSwapDirection] = useState<'AtoB' | 'BtoA'>('AtoB');
+  const [swapDirection, setSwapDirection] = useState<'XtoY' | 'YtoX'>('XtoY');
   const [inputAmount, setInputAmount] = useState('');
   const [expectedOutput, setExpectedOutput] = useState('0');
   const [isCalculating, setIsCalculating] = useState(false);
 
-  // Determine token mapping based on contract logic (tokenX < tokenY by address)
-  const isTokenALower = CONTRACT_ADDRESSES.TOKEN_A.toLowerCase() < CONTRACT_ADDRESSES.TOKEN_B.toLowerCase();
-  const tokenXAddress = isTokenALower ? CONTRACT_ADDRESSES.TOKEN_A : CONTRACT_ADDRESSES.TOKEN_B;
-  const tokenYAddress = isTokenALower ? CONTRACT_ADDRESSES.TOKEN_B : CONTRACT_ADDRESSES.TOKEN_A;
-
-  // Read pool reserves using individual calls like PoolInfo component
+  // Read pool reserves
   const { data: xReserve } = useReadContract({
     address: CONTRACT_ADDRESSES.MINIAMM as `0x${string}`,
     abi: [
@@ -52,8 +47,8 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
   });
 
   // Read user token balances
-  const { data: tokenABalance } = useReadContract({
-    address: CONTRACT_ADDRESSES.TOKEN_A as `0x${string}`,
+  const { data: tokenXBalance } = useReadContract({
+    address: CONTRACT_ADDRESSES.TOKEN_X as `0x${string}`,
     abi: [
       {
         inputs: [{ name: 'account', type: 'address' }],
@@ -67,8 +62,8 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
     args: address ? [address] : undefined,
   });
 
-  const { data: tokenBBalance } = useReadContract({
-    address: CONTRACT_ADDRESSES.TOKEN_B as `0x${string}`,
+  const { data: tokenYBalance } = useReadContract({
+    address: CONTRACT_ADDRESSES.TOKEN_Y as `0x${string}`,
     abi: [
       {
         inputs: [{ name: 'account', type: 'address' }],
@@ -83,8 +78,8 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
   });
 
   // Read token allowances
-  const { data: tokenAAllowance } = useReadContract({
-    address: CONTRACT_ADDRESSES.TOKEN_A as `0x${string}`,
+  const { data: tokenXAllowance } = useReadContract({
+    address: CONTRACT_ADDRESSES.TOKEN_X as `0x${string}`,
     abi: [
       {
         inputs: [
@@ -101,8 +96,8 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
     args: address ? [address, CONTRACT_ADDRESSES.MINIAMM] : undefined,
   });
 
-  const { data: tokenBAllowance } = useReadContract({
-    address: CONTRACT_ADDRESSES.TOKEN_B as `0x${string}`,
+  const { data: tokenYAllowance } = useReadContract({
+    address: CONTRACT_ADDRESSES.TOKEN_Y as `0x${string}`,
     abi: [
       {
         inputs: [
@@ -152,11 +147,7 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
 
       let outputAmount: bigint;
       
-      // Determine which reserve to use based on actual token mapping
-      const isSwappingAtoB = swapDirection === 'AtoB';
-      const isATokenX = isTokenALower;
-      
-      if ((isSwappingAtoB && isATokenX) || (!isSwappingAtoB && !isATokenX)) {
+      if (swapDirection === 'XtoY') {
         // Swapping tokenX for tokenY
         const amountInWithFee = inputAmountWei * 997n;
         const numerator = amountInWithFee * yReserveBigInt;
@@ -177,7 +168,7 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
     }
     
     setIsCalculating(false);
-  }, [inputAmount, swapDirection, xReserve, yReserve, isTokenALower]);
+  }, [inputAmount, swapDirection, xReserve, yReserve]);
 
   // Handle approve success
   useEffect(() => {
@@ -233,13 +224,13 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
 
     const inputAmountWei = parseEther(inputAmount);
     
-    if (swapDirection === 'AtoB') {
-      if (!tokenABalance || inputAmountWei > (tokenABalance as bigint)) {
-        return 'Insufficient Token A balance';
+    if (swapDirection === 'XtoY') {
+      if (!tokenXBalance || inputAmountWei > (tokenXBalance as bigint)) {
+        return 'Insufficient Token X balance';
       }
     } else {
-      if (!tokenBBalance || inputAmountWei > (tokenBBalance as bigint)) {
-        return 'Insufficient Token B balance';
+      if (!tokenYBalance || inputAmountWei > (tokenYBalance as bigint)) {
+        return 'Insufficient Token Y balance';
       }
     }
 
@@ -254,10 +245,10 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
     }
 
     // Check if swap amount exceeds available liquidity
-    if (swapDirection === 'AtoB' && inputAmountWei >= xReserveBigInt) {
+    if (swapDirection === 'XtoY' && inputAmountWei >= xReserveBigInt) {
       return 'Swap amount exceeds available liquidity';
     }
-    if (swapDirection === 'BtoA' && inputAmountWei >= yReserveBigInt) {
+    if (swapDirection === 'YtoX' && inputAmountWei >= yReserveBigInt) {
       return 'Swap amount exceeds available liquidity';
     }
 
@@ -269,16 +260,16 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
     
     const inputAmountWei = parseEther(inputAmount);
     
-    if (swapDirection === 'AtoB') {
-      return !tokenAAllowance || inputAmountWei > (tokenAAllowance as bigint);
+    if (swapDirection === 'XtoY') {
+      return !tokenXAllowance || inputAmountWei > (tokenXAllowance as bigint);
     } else {
-      return !tokenBAllowance || inputAmountWei > (tokenBAllowance as bigint);
+      return !tokenYAllowance || inputAmountWei > (tokenYAllowance as bigint);
     }
   };
 
   const handleApprove = async () => {
     try {
-      const tokenAddress = swapDirection === 'AtoB' ? CONTRACT_ADDRESSES.TOKEN_A : CONTRACT_ADDRESSES.TOKEN_B;
+      const tokenAddress = swapDirection === 'XtoY' ? CONTRACT_ADDRESSES.TOKEN_X : CONTRACT_ADDRESSES.TOKEN_Y;
       const inputAmountWei = parseEther(inputAmount);
 
       writeApprove({
@@ -298,8 +289,8 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
         functionName: 'approve',
         args: [CONTRACT_ADDRESSES.MINIAMM, inputAmountWei],
       });
-    } catch (error: any) {
-      onError(`Approval failed: ${error.message || 'Unknown error'}`);
+    } catch (error: unknown) {
+      onError(`Approval failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -313,19 +304,21 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
     try {
       const inputAmountWei = parseEther(inputAmount);
       
-      // Determine correct swap arguments based on token mapping
-      const isSwappingAtoB = swapDirection === 'AtoB';
-      const isATokenX = isTokenALower;
-      
+      // Simple: TOKEN_X and TOKEN_Y are already in correct order
       let swapArgs: readonly [bigint, bigint];
       
-      if ((isSwappingAtoB && isATokenX) || (!isSwappingAtoB && !isATokenX)) {
+      if (swapDirection === 'XtoY') {
         // Swapping tokenX for tokenY
         swapArgs = [inputAmountWei, 0n];
       } else {
         // Swapping tokenY for tokenX
         swapArgs = [0n, inputAmountWei];
       }
+
+      console.log('🔍 Swap Debug Info:');
+      console.log('  Direction:', swapDirection);
+      console.log('  Input Amount:', inputAmount);
+      console.log('  Swap Args:', swapArgs);
 
       writeSwap({
         address: CONTRACT_ADDRESSES.MINIAMM as `0x${string}`,
@@ -344,8 +337,8 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
         functionName: 'swap',
         args: swapArgs,
       });
-    } catch (error: any) {
-      onError(`Swap failed: ${error.message || 'Unknown error'}`);
+    } catch (error: unknown) {
+      onError(`Swap failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -358,7 +351,7 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
   };
 
   const switchDirection = () => {
-    setSwapDirection(swapDirection === 'AtoB' ? 'BtoA' : 'AtoB');
+    setSwapDirection(swapDirection === 'XtoY' ? 'YtoX' : 'XtoY');
     setInputAmount('');
     setExpectedOutput('0');
   };
@@ -376,12 +369,15 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
           <div className="text-center flex-1">
             <div className="text-sm text-gray-600">From</div>
             <div className="font-semibold">
-              {swapDirection === 'AtoB' ? 'Token A' : 'Token B'}
+              {swapDirection === 'XtoY' 
+                ? `${TOKEN_METADATA[CONTRACT_ADDRESSES.TOKEN_X].name} (${TOKEN_METADATA[CONTRACT_ADDRESSES.TOKEN_X].symbol})`
+                : `${TOKEN_METADATA[CONTRACT_ADDRESSES.TOKEN_Y].name} (${TOKEN_METADATA[CONTRACT_ADDRESSES.TOKEN_Y].symbol})`
+              }
             </div>
             <div className="text-xs text-gray-500">
-              Balance: {swapDirection === 'AtoB' 
-                ? (tokenABalance ? formatEther(tokenABalance as bigint) : '0')
-                : (tokenBBalance ? formatEther(tokenBBalance as bigint) : '0')
+              Balance: {swapDirection === 'XtoY' 
+                ? (tokenXBalance ? formatEther(tokenXBalance as bigint) : '0')
+                : (tokenYBalance ? formatEther(tokenYBalance as bigint) : '0')
               }
             </div>
           </div>
@@ -397,12 +393,15 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
           <div className="text-center flex-1">
             <div className="text-sm text-gray-600">To</div>
             <div className="font-semibold">
-              {swapDirection === 'AtoB' ? 'Token B' : 'Token A'}
+              {swapDirection === 'XtoY' 
+                ? `${TOKEN_METADATA[CONTRACT_ADDRESSES.TOKEN_Y].name} (${TOKEN_METADATA[CONTRACT_ADDRESSES.TOKEN_Y].symbol})`
+                : `${TOKEN_METADATA[CONTRACT_ADDRESSES.TOKEN_X].name} (${TOKEN_METADATA[CONTRACT_ADDRESSES.TOKEN_X].symbol})`
+              }
             </div>
             <div className="text-xs text-gray-500">
-              Balance: {swapDirection === 'AtoB' 
-                ? (tokenBBalance ? formatEther(tokenBBalance as bigint) : '0')
-                : (tokenABalance ? formatEther(tokenABalance as bigint) : '0')
+              Balance: {swapDirection === 'XtoY' 
+                ? (tokenYBalance ? formatEther(tokenYBalance as bigint) : '0')
+                : (tokenXBalance ? formatEther(tokenXBalance as bigint) : '0')
               }
             </div>
           </div>
@@ -429,7 +428,11 @@ export default function SwapComponent({ onError, onSuccess }: SwapComponentProps
         <div className="p-3 bg-gray-50 rounded-lg">
           <div className="text-sm text-gray-600 mb-1">Expected Output</div>
           <div className="text-lg font-semibold">
-            {isCalculating ? 'Calculating...' : `${expectedOutput} ${swapDirection === 'AtoB' ? 'Token B' : 'Token A'}`}
+            {isCalculating ? 'Calculating...' : `${expectedOutput} ${
+              swapDirection === 'XtoY' 
+                ? TOKEN_METADATA[CONTRACT_ADDRESSES.TOKEN_Y].symbol
+                : TOKEN_METADATA[CONTRACT_ADDRESSES.TOKEN_X].symbol
+            }`}
           </div>
           {parseFloat(expectedOutput) > 0 && (
             <div className="text-xs text-gray-500 mt-1">

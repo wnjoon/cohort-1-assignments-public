@@ -46,5 +46,15 @@
 - [x] 유동성 해제 과정에서 발생하는 오류 처리 및 메시지 표시
 
 ## 7단계: 배포
-- [ ] Cloudflare Workers를 통한 웹 애플리케이션 배포 준비
-- [ ] 최종 테스트 및 배포
+- [x] Cloudflare Pages를 통한 웹 애플리케이션 배포 준비
+- [x] Next.js 정적 빌드 설정 (output: 'export')
+- [x] TypeScript 오류 수정 (any → unknown 타입 변경)
+- [x] Wrangler CLI 설치 및 Cloudflare 인증
+- [x] Cloudflare Pages 프로젝트 생성 (miniamm-dapp)
+- [x] 최종 테스트 및 배포 완료
+
+**배포 결과:**
+- 메인 도메인: https://miniamm-dapp.pages.dev ✅ (정상 동작)
+- 배포 URL: https://27e7e9a0.miniamm-dapp.pages.dev ⚠️ (SSL 오류 - 정상적인 현상)
+- 업로드된 파일: 200개
+- 배포 상태: 성공

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { parseEther, formatEther } from 'viem';
-import { CONTRACT_ADDRESSES } from '../config/contracts';
+import { CONTRACT_ADDRESSES, TOKEN_METADATA } from '../config/contracts';
 
 interface RemoveLiquidityProps {
   onError: (error: string) => void;
@@ -13,8 +13,8 @@ interface RemoveLiquidityProps {
 export default function RemoveLiquidity({ onError, onSuccess }: RemoveLiquidityProps) {
   const { address } = useAccount();
   const [lpAmount, setLpAmount] = useState('');
-  const [expectedTokenA, setExpectedTokenA] = useState('0');
-  const [expectedTokenB, setExpectedTokenB] = useState('0');
+  const [expectedTokenX, setExpectedTokenX] = useState('0');
+  const [expectedTokenY, setExpectedTokenY] = useState('0');
   const [isCalculating, setIsCalculating] = useState(false);
 
   // Read user LP token balance
@@ -83,14 +83,13 @@ export default function RemoveLiquidity({ onError, onSuccess }: RemoveLiquidityP
     hash: removeLiquidityHash,
   });
 
-  // Determine token mapping based on contract logic (tokenX < tokenY by address)
-  const isTokenALower = CONTRACT_ADDRESSES.TOKEN_A.toLowerCase() < CONTRACT_ADDRESSES.TOKEN_B.toLowerCase();
+  // No mapping needed - using TOKEN_X and TOKEN_Y directly
 
   // Calculate expected token amounts when removing liquidity
   useEffect(() => {
     if (!lpAmount || !totalSupply || !xReserve || !yReserve || lpAmount === '0') {
-      setExpectedTokenA('0');
-      setExpectedTokenB('0');
+      setExpectedTokenX('0');
+      setExpectedTokenY('0');
       return;
     }
 
@@ -103,42 +102,34 @@ export default function RemoveLiquidity({ onError, onSuccess }: RemoveLiquidityP
       const yReserveBigInt = yReserve as bigint;
 
       if (totalSupplyBigInt === 0n) {
-        setExpectedTokenA('0');
-        setExpectedTokenB('0');
+        setExpectedTokenX('0');
+        setExpectedTokenY('0');
         setIsCalculating(false);
         return;
       }
 
-      // Calculate proportional amounts
+      // Calculate proportional amounts - direct mapping
       const xAmount = (lpAmountWei * xReserveBigInt) / totalSupplyBigInt;
       const yAmount = (lpAmountWei * yReserveBigInt) / totalSupplyBigInt;
 
-      // Map to Token A and Token B based on contract logic
-      if (isTokenALower) {
-        // Token A = tokenX, Token B = tokenY
-        setExpectedTokenA(formatEther(xAmount));
-        setExpectedTokenB(formatEther(yAmount));
-      } else {
-        // Token A = tokenY, Token B = tokenX
-        setExpectedTokenA(formatEther(yAmount));
-        setExpectedTokenB(formatEther(xAmount));
-      }
+      setExpectedTokenX(formatEther(xAmount));
+      setExpectedTokenY(formatEther(yAmount));
     } catch (error) {
       console.error('Error calculating expected amounts:', error);
-      setExpectedTokenA('0');
-      setExpectedTokenB('0');
+      setExpectedTokenX('0');
+      setExpectedTokenY('0');
     }
 
     setIsCalculating(false);
-  }, [lpAmount, totalSupply, xReserve, yReserve, isTokenALower]);
+  }, [lpAmount, totalSupply, xReserve, yReserve]);
 
   // Handle remove liquidity success
   useEffect(() => {
     if (isRemoveLiquiditySuccess) {
       onSuccess('Liquidity removed successfully!');
       setLpAmount('');
-      setExpectedTokenA('0');
-      setExpectedTokenB('0');
+      setExpectedTokenX('0');
+      setExpectedTokenY('0');
     }
   }, [isRemoveLiquiditySuccess, onSuccess]);
 
@@ -187,8 +178,8 @@ export default function RemoveLiquidity({ onError, onSuccess }: RemoveLiquidityP
         functionName: 'removeLiquidity',
         args: [lpAmountWei],
       });
-    } catch (error: any) {
-      onError(`Remove liquidity failed: ${error.message || 'Unknown error'}`);
+    } catch (error: unknown) {
+      onError(`Remove liquidity failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -242,15 +233,15 @@ export default function RemoveLiquidity({ onError, onSuccess }: RemoveLiquidityP
           <div className="text-sm text-gray-600 mb-2">You will receive</div>
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Token A:</span>
+              <span className="text-sm text-gray-600">{TOKEN_METADATA[CONTRACT_ADDRESSES.TOKEN_X].name} ({TOKEN_METADATA[CONTRACT_ADDRESSES.TOKEN_X].symbol}):</span>
               <span className="font-semibold">
-                {isCalculating ? 'Calculating...' : expectedTokenA}
+                {isCalculating ? 'Calculating...' : expectedTokenX}
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Token B:</span>
+              <span className="text-sm text-gray-600">{TOKEN_METADATA[CONTRACT_ADDRESSES.TOKEN_Y].name} ({TOKEN_METADATA[CONTRACT_ADDRESSES.TOKEN_Y].symbol}):</span>
               <span className="font-semibold">
-                {isCalculating ? 'Calculating...' : expectedTokenB}
+                {isCalculating ? 'Calculating...' : expectedTokenY}
               </span>
             </div>
           </div>

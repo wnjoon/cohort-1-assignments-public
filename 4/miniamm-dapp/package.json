@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typechain": "typechain --target ethers-v6 --out-dir src/types 'abis/*.json'"
+    "typechain": "typechain --target ethers-v6 --out-dir src/types 'abis/*.json'",
+    "export": "next build"
   },
   "dependencies": {
     "@rainbow-me/rainbowkit": "^2.2.8",
